@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Home Budget</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0f1330">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Home Budget">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --blue:#1d2766; --green:#9b2226; --bg:#e9ebf3; --card:#fff; --text:#161a33; --muted:#5d6382; --red:#b3202a; --ink:#0f1330; --madder:#9b2226; --rose:#f6e3e1; --line:#d5d8e6; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, Roboto, "Segoe UI", sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--blue); color:#fff; position:sticky; top:0; z-index:20; }
+  header h1 { margin:0; font-size:18px; padding:14px 16px 10px; }
+  .tabs { display:flex; }
+  .tabs button { flex:1; background:none; border:0; border-radius:0; color:rgba(255,255,255,.7); font-size:15px; font-weight:600; padding:10px; border-bottom:3px solid transparent; width:auto; margin:0; }
+  .tabs button.on { color:#fff; border-bottom-color:#f2b705; }
+  .tabpick { display:flex; gap:8px; padding:8px 12px 10px; background:#17306e; }
+  .tabpick select, .tabpick input { flex:1; padding:9px 10px; font-size:15px; font-weight:600; border:0; border-radius:8px; background:#fff; color:var(--text); }
+  .tabpick button { border:0; border-radius:8px; padding:0 12px; font-size:15px; font-weight:600; background:#f2b705; color:#1c1c1c; }
+  .tabpick[hidden] { display:none; }
+  #tabBtn { flex:1; display:flex; justify-content:space-between; align-items:center; text-align:left; background:#fff; color:var(--text); padding:10px 12px; font-size:15px; }
+  #picker { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.45); display:flex; align-items:flex-start; justify-content:center; padding:12px; }
+  #picker[hidden] { display:none; }
+  .pbox { background:#fff; width:100%; max-width:520px; max-height:calc(100vh - 24px); border-radius:14px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.3); }
+  .phead { display:flex; gap:8px; padding:12px; border-bottom:1px solid #eee; }
+  .phead input { flex:1; padding:11px 12px; font-size:16px; border:2px solid var(--blue); border-radius:10px; }
+  .phead button { border:0; background:#eee; border-radius:10px; padding:0 14px; font-size:18px; }
+  .plist { overflow:auto; -webkit-overflow-scrolling:touch; }
+  .plist button { display:flex; width:100%; justify-content:space-between; align-items:center; gap:8px; text-align:left; border:0; border-bottom:1px solid #f0f0f0; background:#fff; padding:13px 16px; font-size:15px; color:var(--text); }
+  .plist button.cur { background:#eef2ff; font-weight:700; color:var(--blue); }
+  .plist .tag { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .plist mark { background:#fff1a8; padding:0; }
+  .pempty { padding:20px; text-align:center; color:var(--muted); }
+  main { padding:12px 12px 90px; max-width:560px; margin:0 auto; }
+  main.wide { max-width:none; padding-bottom:12px; }
+  .card { background:var(--card); border-radius:12px; padding:14px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .card h2 { margin:0 0 10px; font-size:15px; }
+  .card.bhai h2 { color:var(--green); }
+  .card.mera h2 { color:var(--blue); }
+  label { display:block; font-size:13px; color:var(--muted); margin:10px 0 4px; }
+  input { width:100%; padding:11px 12px; font-size:16px; border:1px solid #d1d5db; border-radius:8px; background:#fff; }
+  input:focus { outline:none; border-color:var(--blue); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0 10px; }
+  .full { grid-column:1 / -1; }
+  .sumbox { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .sumbox div { background:#eef2ff; border-radius:8px; padding:8px 10px; }
+  .sumbox small { display:block; color:var(--muted); font-size:11px; }
+  .sumbox b { font-size:15px; }
+  .neg { color:var(--red); }
+  .recent div.e { padding:8px 0; border-bottom:1px solid #eee; font-size:13px; }
+  .recent .e b { font-size:14px; }
+  .recent .e span { color:var(--muted); display:block; margin-top:2px; }
+  .bar { position:fixed; bottom:0; left:0; right:0; padding:10px 12px; background:#fff; box-shadow:0 -2px 8px rgba(0,0,0,.08); }
+  .bar button { width:100%; max-width:560px; display:block; margin:0 auto; padding:14px; font-size:16px; font-weight:600; border:0; border-radius:10px; background:var(--blue); color:#fff; }
+  .bar button:disabled { opacity:.6; }
+  #toast { position:fixed; left:50%; bottom:80px; transform:translateX(-50%); background:#222; color:#fff; padding:10px 16px; border-radius:20px; font-size:14px; display:none; z-index:30; }
+  .hl label { color:var(--text); font-weight:700; font-size:14px; }
+  .hl input { background:#fff8db; border:2px solid #f2b705; font-weight:600; }
+  .hl input:focus { border-color:#d99a00; box-shadow:0 0 0 3px rgba(242,183,5,.25); }
+
+  /* ---------- View (sheet jaisa) ---------- */
+  .vtools { display:flex; gap:8px; margin-bottom:10px; }
+  .vtools input { flex:1; padding:9px 12px; font-size:15px; }
+  .vtools button { padding:0 14px; border:0; border-radius:8px; background:var(--blue); color:#fff; font-size:18px; }
+  .tblwrap { overflow:auto; max-height:calc(100vh - 260px); background:#fff; border:1px solid #ccc; border-radius:8px; -webkit-overflow-scrolling:touch; }
+  table.sheet { border-collapse:separate; border-spacing:0; font-size:12px; white-space:nowrap; }
+  table.sheet th, table.sheet td { border-right:1px solid #d0d0d0; border-bottom:1px solid #d0d0d0; padding:6px 8px; }
+  table.sheet thead { position:sticky; top:0; z-index:4; }
+  table.sheet th { background:var(--blue); color:#fff; font-weight:700; text-align:center; }
+  table.sheet th.g { background:var(--green); }
+  table.sheet tr.bud td { background:#e6e6e6; font-weight:600; }
+  table.sheet tr.kh td { background:#f4a6a0; font-weight:700; }
+  table.sheet tr.bud td.lbl, table.sheet tr.kh td.lbl { background:#000; color:#fff; text-align:center; }
+  table.sheet td.n { text-align:right; }
+  table.sheet td.desc { background:#9e9e9e; color:#111; }
+  table.sheet td.g { background:#d9ead3; }
+  table.sheet td.item { font-weight:600; }
+  table.sheet tbody tr:nth-child(even) td:not(.desc):not(.g):not(.c0):not(.c1) { background:#fafafa; }
+  table.sheet .c0 { position:sticky; left:0; z-index:2; background:#fff; min-width:92px; width:92px; }
+  table.sheet .c1 { position:sticky; left:92px; z-index:2; background:#fff; box-shadow:2px 0 3px rgba(0,0,0,.08); }
+  table.sheet th.c0, table.sheet th.c1 { z-index:5; background:var(--blue); }
+  table.sheet tr.bud td.c0, table.sheet tr.bud td.c1, table.sheet tr.kh td.c0, table.sheet tr.kh td.c1 { z-index:5; }
+  table.sheet.raw td { background:#fff; }
+  table.sheet.raw tr:first-child td { background:var(--blue); color:#fff; font-weight:700; position:sticky; top:0; z-index:3; }
+  .note { background:#fff3cd; border:1px solid #f2b705; border-radius:10px; padding:12px; font-size:14px; margin-bottom:12px; }
+  .dbox { position:relative; display:flex; gap:8px; }
+  .dshow { flex:1; display:flex; justify-content:space-between; align-items:center; padding:11px 12px; font-size:17px; font-weight:700; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:var(--text); text-align:left; }
+  .dnav { width:46px; border:1px solid #d1d5db; border-radius:8px; background:#fff; font-size:20px; color:var(--blue); }
+  .dbox input[type=date] { position:absolute; left:0; bottom:0; width:1px; height:1px; opacity:0; pointer-events:none; border:0; padding:0; }
+  /* Poori sheet: phone pe compact */
+  table.sheet { font-size:12px; }
+  table.sheet th, table.sheet td { padding:6px 7px; }
+  table.sheet th { white-space:normal; min-width:62px; max-width:84px; line-height:1.15; font-size:11.5px; vertical-align:bottom; }
+  table.sheet td.n { min-width:56px; }
+  table.sheet td.desc { white-space:normal; min-width:90px; max-width:130px; }
+  /* Date aur Item alag, dono patle (freeze) */
+  table.sheet:not(.raw) .c0 { position:sticky; left:0; z-index:2; width:46px; min-width:46px; max-width:46px; padding:6px 4px; font-size:11px; white-space:nowrap; color:var(--muted); }
+  table.sheet:not(.raw) .c1 { position:sticky; left:46px; z-index:2; width:86px; min-width:86px; max-width:86px; padding:6px 5px; font-size:11.5px; white-space:normal; line-height:1.2; box-shadow:2px 0 4px rgba(0,0,0,.12); }
+  table.sheet:not(.raw) td.c0, table.sheet:not(.raw) td.c1 { background:#fff; }
+  table.sheet:not(.raw) th.c0, table.sheet:not(.raw) th.c1 { z-index:5; background:var(--blue); color:#fff; font-size:11px; }
+  table.sheet:not(.raw) tr.bud td.c0, table.sheet:not(.raw) tr.kh td.c0,
+  table.sheet:not(.raw) tr.bud td.c1, table.sheet:not(.raw) tr.kh td.c1 { z-index:3; background:var(--ink); color:#fff; font-size:11px; }
+  table.sheet.raw td.c0 { position:sticky; left:0; z-index:2; background:#fff; min-width:90px; max-width:120px; white-space:normal; box-shadow:2px 0 4px rgba(0,0,0,.1); }
+  .tblwrap { max-height:calc(100vh - 230px); }
+  .vcount { font-size:12px; color:var(--muted); margin:6px 2px 0; }
+
+  /* ================= Ajrak theme ================= */
+  body { font-family:"Baloo 2", -apple-system, Roboto, sans-serif; font-size:16px; }
+  header { background:var(--ink); box-shadow:none; }
+  header h1 { font-weight:800; font-size:22px; letter-spacing:.2px; padding:14px 16px 6px; }
+  header::after { content:""; display:block; height:14px;
+    background:
+      radial-gradient(circle, #e9c9a8 1.6px, transparent 2px) 4px 3px/8px 8px,
+      radial-gradient(circle at 50% 50%, var(--madder) 3.2px, transparent 3.7px) 0 0/16px 14px,
+      conic-gradient(from 45deg, var(--ink) 25%, var(--blue) 0 50%, var(--ink) 0 75%, var(--blue) 0) 0 0/16px 14px; }
+  .tabs button { font-family:inherit; font-size:16px; color:rgba(255,255,255,.6); }
+  .tabs button.on { color:#fff; border-bottom-color:var(--madder); }
+  .tabpick { background:var(--ink); padding-bottom:12px; }
+  #tabBtn { font-family:inherit; font-weight:700; font-size:16px; border-radius:10px; }
+  #searchBtn { background:var(--madder); color:#fff; border-radius:10px; }
+
+  .card { border-radius:16px; box-shadow:none; border:1px solid var(--line); }
+  .card h2 { font-size:17px; font-weight:800; }
+  .card.mera { border-top:5px solid var(--blue); }
+  .card.bhai { border-top:5px solid var(--madder); }
+  label { font-weight:600; color:var(--muted); }
+  input, .dshow, .dnav { font-family:inherit; border-color:var(--line); border-radius:10px; }
+  input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(29,39,102,.15); }
+  .hl label { color:var(--madder); }
+  .hl input { background:var(--rose); border:2px solid var(--madder); }
+  .hl input:focus { border-color:var(--madder); box-shadow:0 0 0 3px rgba(155,34,38,.18); }
+  .dshow { font-weight:800; color:var(--blue); }
+  .dnav { color:var(--madder); font-weight:800; }
+
+  /* Summary: Remaining Amount sab se numaya */
+  .sumbox div { background:#f2f3f8; border-radius:12px; }
+  .sumbox b { font-size:18px; font-weight:800; color:var(--blue); }
+  .sumbox small { font-size:12px; font-weight:600; }
+  .sumbox div.hero { order:-1; grid-column:1 / -1; background:var(--blue); color:#fff; padding:12px 14px; }
+  .sumbox div.hero small { color:rgba(255,255,255,.75); font-size:13px; }
+  .sumbox div.hero b { color:#fff; font-size:32px; line-height:1.1; }
+  .sumbox div.hero.negv { background:var(--madder); }
+  .neg { color:var(--red) !important; }
+  .sumbox div.hero b.neg { color:#fff !important; }
+
+  .bar { background:rgba(233,235,243,.92); backdrop-filter:blur(6px); box-shadow:none; border-top:1px solid var(--line); }
+  .bar button { font-family:inherit; font-size:18px; font-weight:800; border-radius:12px; background:var(--madder); }
+  #toast { font-family:inherit; background:var(--ink); }
+  .note { background:var(--rose); border-color:var(--madder); }
+
+  .recent .e b { font-weight:700; }
+  .vtools button { background:var(--blue); }
+  .tblwrap { border-color:var(--line); border-radius:12px; }
+  table.sheet { font-family:inherit; font-size:13px; }
+  table.sheet th { background:var(--blue); }
+  table.sheet th.g { background:var(--madder); }
+  table.sheet th.c0, table.sheet th.c1 { background:var(--blue); }
+  table.sheet tr.bud td.lbl, table.sheet tr.kh td.lbl { background:var(--ink); }
+  table.sheet tr.bud td { background:#e4e6ef; }
+  table.sheet tr.kh td { background:#f1cfcb; }
+  table.sheet td.desc { background:#dcdfeb; }
+  table.sheet td.g { background:var(--rose); }
+  table.sheet.raw tr:first-child td { background:var(--blue); }
+
+  .pbox { border-radius:18px; }
+  .phead input { font-family:inherit; border-color:var(--blue); }
+  .plist button { font-family:inherit; font-size:16px; }
+  .plist button.cur { background:#e7e9f4; color:var(--blue); }
+  .plist mark { background:#f3cfcb; }
+
+  /* ---------- Mobile View: entries list ---------- */
+  .vmode { display:flex; background:#dfe2ee; border-radius:12px; padding:4px; margin-bottom:12px; gap:4px; }
+  .vmode[hidden] { display:none; }
+  .sync { display:inline-block; width:12px; height:12px; border:2px solid #c9cde0; border-top-color:var(--madder); border-radius:50%; animation:spin .8s linear infinite; vertical-align:-1px; margin-right:6px; }
+  .sync[hidden] { display:none; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .sync { animation:none; } }
+  .vmode button { flex:1; border:0; background:none; border-radius:9px; padding:9px 4px; font-family:inherit; font-size:14px; font-weight:700; color:var(--muted); }
+  .vmode button.on { background:#fff; color:var(--blue); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .dgroup { margin-bottom:14px; }
+  .dhead { display:flex; justify-content:space-between; align-items:baseline; padding:0 4px 6px; }
+  .dhead b { font-size:15px; font-weight:800; color:var(--blue); }
+  .dhead span { font-size:13px; font-weight:700; color:var(--muted); }
+  .ent { background:#fff; border:1px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:8px; }
+  .ent .top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+  .ent .nm { font-size:16px; font-weight:700; line-height:1.25; color:var(--text); }
+  .ent .amt { font-size:17px; font-weight:800; color:var(--text); white-space:nowrap; }
+  .ent .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .chip { font-size:12.5px; font-weight:600; border-radius:999px; padding:3px 10px; background:#eceef6; color:var(--blue); }
+  .chip.b { background:var(--rose); color:var(--madder); }
+  .chip.t { background:#f1f1f1; color:#555; font-weight:500; }
+  .colrow { background:#fff; border:1px solid var(--line); border-radius:14px; padding:11px 13px; margin-bottom:8px; }
+  .colrow .l { display:flex; justify-content:space-between; font-weight:700; font-size:15px; }
+  .colrow .s { font-size:13px; color:var(--muted); margin-top:2px; }
+  .colrow .s b { color:var(--text); }
+  .meter { height:8px; background:#e6e8f1; border-radius:99px; margin-top:8px; overflow:hidden; }
+  .meter i { display:block; height:100%; background:var(--blue); border-radius:99px; }
+  .meter i.over { background:var(--madder); }
+  .empty { text-align:center; color:var(--muted); padding:30px 10px; }
+
+  /* ================= Claude theme: sirf Data Entry hissa ================= */
+  #entryTab, body.entry .bar { --cl-bg:#f5f0e6; --cl-card:#fbf8f2; --cl-text:#2b2925; --cl-muted:#78736a; --cl-accent:#d97757; --cl-accent-d:#c2603f; --cl-line:#e6dfd2; --cl-soft:#f3e3d9; }
+  body.entry { background:#f5f0e6; }
+  #entryTab { font-family:"DM Sans", -apple-system, sans-serif; color:var(--cl-text); }
+  #entryTab .card { background:var(--cl-card); border:1px solid var(--cl-line); border-top-width:1px; border-radius:18px; }
+  #entryTab .card.mera, #entryTab .card.bhai { border-top:1px solid var(--cl-line); }
+  #entryTab .card h2 { font-family:"Source Serif 4", Georgia, serif; font-weight:600; font-size:21px; color:var(--cl-text); }
+  #entryTab .card.bhai h2 { color:var(--cl-text); }
+  #entryTab .card h2 .tabName { color:var(--cl-accent); }
+  #entryTab label { font-family:"DM Sans", sans-serif; font-weight:500; color:var(--cl-muted); }
+  #entryTab input, #entryTab .dshow, #entryTab .dnav { font-family:"DM Sans", sans-serif; background:#fff; border:1px solid var(--cl-line); border-radius:12px; color:var(--cl-text); }
+  #entryTab input:focus { border-color:var(--cl-accent); box-shadow:0 0 0 3px rgba(217,119,87,.18); }
+  #entryTab .hl label { color:var(--cl-text); font-weight:700; }
+  #entryTab .hl input { background:var(--cl-soft); border:1.5px solid var(--cl-accent); font-weight:600; }
+  #entryTab .hl input:focus { border-color:var(--cl-accent-d); }
+  #entryTab .dshow { font-family:"Source Serif 4", Georgia, serif; font-weight:600; color:var(--cl-text); }
+  #entryTab .dnav { color:var(--cl-accent); }
+  #entryTab .sumbox div { background:#f1ebdf; }
+  #entryTab .sumbox small { font-family:"DM Sans", sans-serif; color:var(--cl-muted); }
+  #entryTab .sumbox b { font-family:"Source Serif 4", Georgia, serif; font-weight:600; color:var(--cl-text); }
+  #entryTab .sumbox div.hero { background:var(--cl-accent); }
+  #entryTab .sumbox div.hero.negv { background:#b5462f; }
+  #entryTab .sumbox div.hero small { color:rgba(255,255,255,.85); }
+  #entryTab .sumbox div.hero b { color:#fff; }
+  #entryTab .neg { color:#b5462f !important; }
+  #entryTab .recent .e { border-bottom-color:var(--cl-line); }
+  #entryTab .recent .e b { font-family:"Source Serif 4", Georgia, serif; font-weight:600; }
+  #entryTab .recent .e span { color:var(--cl-muted); }
+  #entryTab .note { background:var(--cl-soft); border-color:var(--cl-accent); }
+  body.entry .bar { background:rgba(245,240,230,.94); border-top:1px solid var(--cl-line); }
+  body.entry .bar button { font-family:"DM Sans", sans-serif; font-weight:700; font-size:17px; background:var(--cl-accent); border-radius:14px; }
+  body.entry .bar button:active { background:var(--cl-accent-d); }
+
+  /* ===== Phone app (PWA) ===== */
+  html, body { overscroll-behavior-y:none; }
+  header { padding-top:env(safe-area-inset-top); }
+  .bar { padding-bottom:calc(10px + env(safe-area-inset-bottom)); }
+  main { padding-bottom:calc(90px + env(safe-area-inset-bottom)); }
+  #picker { padding-top:calc(12px + env(safe-area-inset-top)); }
+  #setup { position:fixed; inset:0; z-index:100; background:#0f1330; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; text-align:center; font-family:"Baloo 2", sans-serif; }
+  #setup[hidden] { display:none; }
+  #setup img { width:96px; height:96px; border-radius:22px; margin-bottom:18px; }
+  #setup h1 { margin:0 0 8px; font-size:24px; }
+  #setup p { margin:0; max-width:320px; line-height:1.45; color:rgba(255,255,255,.8); }
+</style>
+</head>
+<body class="entry">
+<header>
+  <h1>🏠 Home Budget</h1>
+  <div class="tabs">
+    <button id="tEntry" class="on" type="button">✏️ Data Entry</button>
+    <button id="tView" type="button">📋 View</button>
+  </div>
+  <div class="tabpick">
+    <button id="tabBtn" type="button"><span id="tabBtnTxt">Loading…</span><span><span id="sync" class="sync" hidden></span> ▾</span></button>
+    <button id="searchBtn" type="button" title="Tab dhoondo">🔍</button>
+  </div>
+</header>
+
+<main id="main">
+  <!-- ========== ENTRY ========== -->
+  <section id="entryTab">
+    <div class="note" id="rawNote" hidden>Ye tab budget wale format mein nahi hai, is liye is mein app se entry nahi ho sakti. Is ka data <b>View</b> tab mein dekho.</div>
+    <div class="card">
+      <div class="sumbox" id="sumbox">Loading…</div>
+    </div>
+
+    <form id="f" autocomplete="off">
+      <div class="card mera">
+        <h2>Entry — <span class="tabName"></span></h2>
+        <div class="grid2">
+          <div class="full"><label>Date</label>
+            <div class="dbox">
+              <button type="button" class="dnav" id="dPrev" title="Pichla din">‹</button>
+              <button type="button" class="dshow" id="dShow"><span id="dTxt"></span><span>📅</span></button>
+              <button type="button" class="dnav" id="dNext" title="Agla din">›</button>
+              <input type="date" name="date" id="dInp" required tabindex="-1">
+            </div>
+          </div>
+          <div class="full hl"><label>Item Name</label><input type="text" name="itemName"></div>
+          <div><label>Grocery</label><input name="grocery" inputmode="decimal"></div>
+          <div><label>Wajeeha Total</label><input name="wajeehaTotal" inputmode="decimal"></div>
+          <div><label>Naeem Total</label><input name="naeemTotal" inputmode="decimal"></div>
+          <div><label>Extra Expenses</label><input name="extraExpenses" inputmode="decimal"></div>
+          <div><label>Committee</label><input name="committee" inputmode="decimal"></div>
+        </div>
+      </div>
+
+      <div class="card bhai">
+        <h2>Bhai</h2>
+        <div class="grid2">
+          <div class="full hl"><label>Discription</label><input type="text" name="discription"></div>
+          <div><label>Mera and Bhai 50-50</label><input name="meraBhai5050" inputmode="decimal"></div>
+          <div><label>Bhai Udhar</label><input name="bhaiUdhar" inputmode="decimal"></div>
+        </div>
+      </div>
+    </form>
+
+    <div class="card recent">
+      <h2>Recent entries</h2>
+      <div id="recent">Loading…</div>
+    </div>
+  </section>
+
+  <!-- ========== VIEW ========== -->
+  <section id="viewTab" hidden>
+    <div class="card">
+      <div class="sumbox" id="sumbox2">Loading…</div>
+    </div>
+    <div class="vtools">
+      <input id="q" type="search" placeholder="Search (item, date, description…)">
+      <button id="refresh" type="button" title="Refresh">↻</button>
+    </div>
+    <div class="vmode" id="vmode">
+      <button type="button" data-m="list" class="on">Entries</button>
+      <button type="button" data-m="cols">Column totals</button>
+      <button type="button" data-m="table">Poori sheet</button>
+    </div>
+    <div id="listWrap"></div>
+    <div id="colsWrap" hidden></div>
+    <div class="tblwrap" id="tblWrap" hidden><table class="sheet" id="sheet"><tbody><tr><td>Loading…</td></tr></tbody></table></div>
+    <div class="vcount" id="vcount"></div>
+  </section>
+</main>
+
+<div class="bar" id="bar"><button id="save" type="button">Save to Sheet</button></div>
+<div id="toast"></div>
+<div id="setup" hidden>
+  <img src="icon-192.png" alt="">
+  <h1>Home Budget</h1>
+  <p id="setupMsg">Ye app pehli dafa apne <b>setup link</b> se kholo. Woh link WhatsApp pe save hai.</p>
+</div>
+<div id="picker" hidden>
+  <div class="pbox">
+    <div class="phead">
+      <input id="tabQ" type="search" placeholder="Tab dhoondo… e.g. oct 25, 2024, mandi" autocomplete="off">
+      <button id="pClose" type="button">✕</button>
+    </div>
+    <div class="plist" id="plist"></div>
+  </div>
+</div>
+
+<script>
+  /* ===== Phone app: Google Sheet se data (Apps Script API) ===== */
+  const API_URL = "PASTE_WEB_APP_URL_HERE";
+  let APP_KEY = '';
+  try {
+    const qk = new URLSearchParams(location.search).get('k');
+    APP_KEY = qk || localStorage.getItem('hb_key') || '';
+    if (qk) localStorage.setItem('hb_key', qk);
+  } catch (e) {}
+  (function () {
+    const bad = !APP_KEY || /PASTE_/.test(API_URL);
+    if (bad) document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('setup').hidden = false;
+      if (/PASTE_/.test(API_URL)) document.getElementById('setupMsg').innerHTML = 'index.html mein <b>API_URL</b> abhi set nahi hua.';
+    });
+  })();
+  function callApi(fn, args) {
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args, k: APP_KEY })
+    }).then(r => r.json()).then(j => {
+      if (!j.ok) {
+        if (/app-link/.test(j.error)) document.getElementById('setup').hidden = false;
+        throw new Error(j.error);
+      }
+      return j.data;
+    }).catch(e => { throw (e instanceof Error ? e : new Error(String(e))); });
+  }
+  // google.script.run jaisa hi interface, taake baqi app ka code wahi rahe
+  window.google = { script: { get run() {
+    let ok = null, fail = null;
+    const p = new Proxy({}, { get(_, name) {
+      if (name === 'withSuccessHandler') return fn => { ok = fn; return p; };
+      if (name === 'withFailureHandler') return fn => { fail = fn; return p; };
+      return (...args) => {
+        callApi(name, args).then(d => ok && ok(d))
+          .catch(e => fail && fail(/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? new Error('Internet nahi chal raha') : e));
+      };
+    } });
+    return p;
+  } } };
+  if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+<script>
+  const f = document.getElementById('f');
+  const btn = document.getElementById('save');
+  let viewData = null;
+  let TABS = [], BUDGET = [], currentTab = '';
+  const norm = s => String(s).trim().toLowerCase().replace(/\s+/g, ' ');
+
+  // Column layout (sheet ke D:P)
+  const isNum = v => /^-?[\d,]+(\.\d+)?$/.test(String(v).trim());
+
+  function today() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  // Date ko 7-Oct-2026 format mein dikhana (sheet mein bhi isi format mein jati hai)
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dInp = document.getElementById('dInp');
+  function showDate() {
+    const p = dInp.value.split('-');
+    document.getElementById('dTxt').textContent = p.length === 3 ? (+p[2]) + '-' + MON[+p[1] - 1] + '-' + p[0] : 'Date chuno';
+  }
+  function shiftDate(n) {
+    const p = dInp.value.split('-').map(Number);
+    const d = new Date(p[0], p[1] - 1, p[2] + n);
+    dInp.value = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    showDate();
+  }
+  document.getElementById('dShow').onclick = () => {
+    try { dInp.showPicker(); } catch (e) { dInp.style.pointerEvents = 'auto'; dInp.focus(); dInp.click(); }
+  };
+  document.getElementById('dPrev').onclick = () => shiftDate(-1);
+  document.getElementById('dNext').onclick = () => shiftDate(1);
+  dInp.addEventListener('change', showDate);
+  dInp.addEventListener('input', showDate);
+  f.date.value = today(); showDate();
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2500);
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  function sumHtml(box) {
+    return box.map(b =>
+      `<div class="${/remaining amount/i.test(b.label) ? 'hero' + (String(b.value).trim().startsWith('-') ? ' negv' : '') : ''}"><small>${esc(b.label)}</small><b class="${String(b.value).trim().startsWith('-') ? 'neg' : ''}">${esc(b.value)}</b></div>`).join('');
+  }
+
+  /* ---------- Tabs ---------- */
+  function showTab(which) {
+    const isView = which === 'view';
+    document.body.classList.toggle('entry', !isView);
+    document.getElementById('entryTab').hidden = isView;
+    document.getElementById('viewTab').hidden = !isView;
+    document.getElementById('bar').style.display = isView ? 'none' : '';
+    document.getElementById('main').classList.toggle('wide', isView);
+    document.getElementById('tEntry').classList.toggle('on', !isView);
+    document.getElementById('tView').classList.toggle('on', isView);
+    window.scrollTo(0, 0);
+    if (isView) renderView();
+  }
+  document.getElementById('tEntry').onclick = () => showTab('entry');
+  document.getElementById('tView').onclick = () => showTab('view');
+
+  /* ---------- Entry ---------- */
+  function renderEntry(data) {
+    if (data.raw) return;
+    document.getElementById('sumbox').innerHTML = sumHtml(data.summary.box);
+    if (data.fields) f.querySelectorAll('input').forEach(inp => {
+      if (inp.name === 'date') return;
+      const on = data.fields.includes(inp.name);
+      inp.closest('div').style.display = on ? '' : 'none';
+      if (!on) inp.value = '';
+    });
+    document.getElementById('recent').innerHTML = data.recent.length ? data.recent.map(r =>
+      `<div class="e"><b>${esc(r.date)} — ${esc(r.item || '(no name)')}</b><span>${esc(r.details)}</span></div>`).join('')
+      : 'Abhi koi entry nahi';
+  }
+
+  let curData = null;
+  function isBudget() { return curData ? !curData.raw : true; }
+
+  function applyMode() {
+    const b = isBudget();
+    document.getElementById('rawNote').hidden = b;
+    f.style.display = b ? '' : 'none';
+    document.getElementById('bar').style.visibility = b ? '' : 'hidden';
+    document.querySelector('#entryTab .card').style.display = b ? '' : 'none';
+    document.querySelector('#entryTab .recent').style.display = b ? '' : 'none';
+    btn.disabled = !b;
+    document.getElementById('sumbox2').parentElement.style.display = b ? '' : 'none';
+  }
+
+  /* ---------- Data: ek hi call, aur pichla data phone mein yaad (foran dikhane ke liye) ---------- */
+  function cacheGet(t) { try { return JSON.parse(localStorage.getItem('hb_d:' + t) || 'null'); } catch (e) { return null; } }
+  function cachePut(d) {
+    try {
+      let keys = JSON.parse(localStorage.getItem('hb_dk') || '[]').filter(k => k !== d.tab);
+      keys.unshift(d.tab);
+      keys.slice(6).forEach(k => localStorage.removeItem('hb_d:' + k));
+      keys = keys.slice(0, 6);
+      localStorage.setItem('hb_d:' + d.tab, JSON.stringify(d));
+      localStorage.setItem('hb_dk', JSON.stringify(keys));
+    } catch (e) {}
+  }
+  function syncing(on) { document.getElementById('sync').hidden = !on; }
+
+  function applyData(d) {
+    curData = d; viewData = d;
+    applyMode();
+    renderEntry(d);
+    renderView();
+  }
+
+  let reqId = 0;
+  function load() {
+    const tab = currentTab, my = ++reqId;
+    const c = tab && cacheGet(tab);
+    if (c) applyData(c);
+    else {
+      curData = null; viewData = null; applyMode();
+      document.getElementById('sumbox').textContent = 'Loading…';
+      document.getElementById('sumbox2').textContent = 'Loading…';
+      document.getElementById('recent').textContent = 'Loading…';
+      document.getElementById('listWrap').innerHTML = '<div class="empty">Loading…</div>';
+      document.getElementById('vcount').textContent = '';
+    }
+    syncing(true);
+    google.script.run
+      .withSuccessHandler(d => {
+        if (my !== reqId) return;           // beech mein tab badal gaya
+        syncing(false);
+        cachePut(d);
+        if (d.tab !== currentTab) { currentTab = d.tab; showTabName(); }
+        applyData(d);
+      })
+      .withFailureHandler(e => { if (my === reqId) { syncing(false); toast('Error: ' + e.message); } })
+      .getTab(tab);
+  }
+
+  btn.addEventListener('click', () => {
+    const data = {};
+    new FormData(f).forEach((v, k) => data[k] = v);
+    const any = Object.keys(data).some(k => k !== 'date' && String(data[k]).trim() !== '');
+    if (!data.date) return toast('Date daalo');
+    if (!any) return toast('Kam az kam ek field bharo');
+
+    btn.disabled = true; btn.textContent = 'Saving…';
+    google.script.run
+      .withSuccessHandler(res => {
+        btn.disabled = false; btn.textContent = 'Save to Sheet';
+        const d = f.date.value;
+        f.reset(); f.date.value = d; showDate();   // date wahi rehti hai
+        cachePut(res);
+        applyData(res);
+        toast('✓ ' + res.tab + ' → row ' + res.row + ' mein save');
+      })
+      .withFailureHandler(e => {
+        btn.disabled = false; btn.textContent = 'Save to Sheet';
+        toast('Error: ' + e.message);
+      })
+      .addEntry(data, currentTab);
+  });
+
+  /* ---------- View ---------- */
+  function cellClass(i, v, d) {
+    const c = [];
+    if (i === 0) c.push('c0');
+    if (i === 1) c.push('c1', 'item');
+    if (i > 1 && isNum(v)) c.push('n');
+    if (i === d.descIdx) c.push('desc');
+    if (i >= d.greenFrom) c.push('g');
+    return c.join(' ');
+  }
+
+  function renderRaw(d, q) {
+    const tbl = document.getElementById('sheet');
+    tbl.classList.add('raw');
+    const head = d.grid[0] || [];
+    const body = d.grid.slice(1).filter(r => !q || r.join(' ').toLowerCase().includes(q));
+    const tr = r => '<tr>' + r.map((v, i) =>
+      `<td class="${i===0?'c0':''}${/^-?[\d,.]+$/.test(v)?' n':''}">${esc(v)}</td>`).join('') + '</tr>';
+    tbl.innerHTML = d.grid.length ? '<tbody>' + tr(head) + body.map(tr).join('') + '</tbody>'
+      : '<tbody><tr><td>Ye tab khali hai</td></tr></tbody>';
+    document.getElementById('vcount').textContent = body.length + ' rows' + (q ? ' (filter lagi hai)' : '');
+  }
+
+  function renderView() {
+    const d = viewData;
+    if (!d) return;
+    const q0 = document.getElementById('q').value.trim().toLowerCase();
+    if (d.raw) { document.getElementById('vmode').hidden = true; showMode(true); return renderRaw(d, q0); }
+    document.getElementById('sheet').classList.remove('raw');
+    document.getElementById('sumbox2').innerHTML = sumHtml(d.box);
+
+    const q = document.getElementById('q').value.trim().toLowerCase();
+    const rows = q ? d.rows.filter(r => r.v.join(' ').toLowerCase().includes(q)) : d.rows;
+    document.getElementById('vcount').textContent = rows.length + ' entries' + (q ? ' (filter lagi hai)' : '');
+    document.getElementById('vmode').hidden = false;
+    showMode();
+    renderList(d, rows);
+    renderCols(d);
+
+    // Phone ke liye: Date + Item ek hi patle column mein (wahi freeze), aur khali columns hata do
+    const cols = [];
+    for (let j = 2; j < d.headers.length; j++) {
+      if (d.rows.some(r => r.v[j] !== '') || d.budget[j] || d.kharch[j]) cols.push(j);
+    }
+    const thc = j => (j >= d.greenFrom ? 'g' : '');
+    const shortD = s => String(s).replace(/-(\d{4})$/, '');   // 1-Oct-2026 -> 1-Oct
+    let h = '<thead><tr><th class="c0">Date</th><th class="c1">Item Name</th>' +
+      cols.map(j => `<th class="${thc(j)}">${esc(d.headers[j])}</th>`).join('') + '</tr>';
+    const totRow = (cls, label, vals) => `<tr class="${cls}"><td class="c0 lbl"></td><td class="c1 lbl">${label}</td>` +
+      cols.map(j => `<td class="${isNum(vals[j]) ? 'n' : ''}">${esc(vals[j])}</td>`).join('') + '</tr>';
+    h += totRow('bud', 'Budget', d.budget) + totRow('kh', 'Kharch', d.kharch) + '</thead><tbody>';
+    h += rows.length ? rows.map(r => `<tr><td class="c0">${esc(shortD(r.v[0]))}</td><td class="c1 item">${esc(r.v[1] || '—')}</td>` +
+      cols.map(j => `<td class="${cellClass(j, r.v[j], d)}">${esc(r.v[j])}</td>`).join('') + '</tr>').join('')
+      : `<tr><td colspan="${cols.length + 2}">Koi entry nahi mili</td></tr>`;
+    h += '</tbody>';
+    document.getElementById('sheet').innerHTML = h;
+  }
+
+  /* --- Mobile list: date ke hisaab se group, har entry ek card --- */
+  let vMode = 'list';
+  try { vMode = localStorage.getItem('hb_vmode') || 'list'; } catch (e) {}
+  const toNum = v => Number(String(v).replace(/,/g, '')) || 0;
+  const fmt = n => n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+  function showMode(rawTab) {
+    const m = rawTab ? 'table' : vMode;
+    document.getElementById('listWrap').hidden = m !== 'list';
+    document.getElementById('colsWrap').hidden = m !== 'cols';
+    document.getElementById('tblWrap').hidden = m !== 'table';
+    document.querySelectorAll('#vmode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  }
+  document.getElementById('vmode').addEventListener('click', e => {
+    const b = e.target.closest('button[data-m]'); if (!b) return;
+    vMode = b.dataset.m;
+    try { localStorage.setItem('hb_vmode', vMode); } catch (e2) {}
+    showMode();
+  });
+
+  function renderList(d, rows) {
+    if (!rows.length) { document.getElementById('listWrap').innerHTML = '<div class="empty">Koi entry nahi mili</div>'; return; }
+    const groups = [];
+    rows.slice().reverse().forEach(r => {           // naya pehle
+      const key = r.v[0] || '(bina date)';
+      let g = groups[groups.length - 1];
+      if (!g || g.key !== key) { g = { key, items: [], total: 0 }; groups.push(g); }
+      g.items.push(r);
+    });
+    document.getElementById('listWrap').innerHTML = groups.map(g => {
+      const cards = g.items.map(r => {
+        let total = 0; const chips = [];
+        for (let j = 2; j < r.v.length; j++) {
+          const v = r.v[j]; if (v === '') continue;
+          if (isNum(v)) {
+            if (j < d.greenFrom) total += toNum(v);
+            chips.push(`<span class="chip${j >= d.greenFrom || /bhai/i.test(d.headers[j]) ? ' b' : ''}">${esc(d.headers[j])}: ${esc(v)}</span>`);
+          } else {
+            chips.push(`<span class="chip t">${esc(v)}</span>`);
+          }
+        }
+        g.total += total;
+        return `<div class="ent"><div class="top"><div class="nm">${esc(r.v[1] || '(no name)')}</div>` +
+          `<div class="amt">${total ? fmt(total) : ''}</div></div>` +
+          (chips.length ? `<div class="chips">${chips.join('')}</div>` : '') + '</div>';
+      }).join('');
+      return `<div class="dgroup"><div class="dhead"><b>${esc(g.key)}</b><span>${g.total ? fmt(g.total) : ''}</span></div>${cards}</div>`;
+    }).join('');
+  }
+
+  /* --- Har column ka Budget vs Kharch --- */
+  function renderCols(d) {
+    const out = [];
+    for (let j = 2; j < d.headers.length; j++) {
+      const bud = toNum(d.budget[j]), kh = toNum(d.kharch[j]);
+      if (!bud && !kh) continue;
+      const pct = bud ? Math.min(100, Math.round(kh / bud * 100)) : 100;
+      const over = bud && kh > bud;
+      out.push(`<div class="colrow"><div class="l"><span>${esc(d.headers[j])}</span><span>${fmt(kh)}</span></div>` +
+        `<div class="s">${bud ? 'Budget <b>' + fmt(bud) + '</b> · ' + (over ? '<b style="color:var(--madder)">' + fmt(kh - bud) + ' zyada</b>' : fmt(bud - kh) + ' baqi') : 'Budget set nahi'}</div>` +
+        (bud ? `<div class="meter"><i class="${over ? 'over' : ''}" style="width:${pct}%"></i></div>` : '') + '</div>');
+    }
+    document.getElementById('colsWrap').innerHTML = out.join('') || '<div class="empty">Is tab mein budget/kharch ki rows nahi hain</div>';
+  }
+
+  document.getElementById('refresh').onclick = () => { load(); loadTabs(true); };
+  document.getElementById('q').addEventListener('input', renderView);
+
+  /* ---------- Tab chunna (search ke saath) ---------- */
+  let HID = [];
+  const picker = document.getElementById('picker');
+  const tabQ = document.getElementById('tabQ');
+  const plist = document.getElementById('plist');
+
+  function showTabName() {
+    document.getElementById('tabBtnTxt').textContent = currentTab ? currentTab + (HID.includes(currentTab) ? ' 🙈' : '') : 'Loading…';
+    document.querySelectorAll('.tabName').forEach(e => e.textContent = currentTab);
+    try { if (currentTab) localStorage.setItem('hb_tab', currentTab); } catch (e) {}
+  }
+  function setTab(name) {
+    currentTab = name;
+    showTabName();
+    load();
+  }
+
+  function hl(t, words) {
+    let s = esc(t);
+    words.forEach(w => { if (w) s = s.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'ig'), '<mark>$1</mark>'); });
+    return s;
+  }
+
+  function renderPicker() {
+    const words = norm(tabQ.value).split(' ').filter(Boolean);
+    const list = TABS.filter(t => words.every(w => norm(t).includes(w)));
+    plist.innerHTML = list.length ? list.map(t => {
+      const tags = [HID.includes(t) ? '🙈 hidden' : '', BUDGET.includes(t) ? '' : 'sirf view'].filter(Boolean).join(' · ');
+      return `<button type="button" data-t="${esc(t)}" class="${t === currentTab ? 'cur' : ''}"><span>${hl(t, words)}</span><span class="tag">${tags}</span></button>`;
+    }).join('') : '<div class="pempty">Koi tab nahi mila</div>';
+  }
+
+  function openPicker(focus) {
+    tabQ.value = '';
+    renderPicker();
+    picker.hidden = false;
+    const cur = plist.querySelector('.cur');
+    if (cur) cur.scrollIntoView({ block: 'center' });
+    if (focus) setTimeout(() => tabQ.focus(), 50);
+  }
+  function closePicker() { picker.hidden = true; tabQ.blur(); }
+
+  document.getElementById('tabBtn').onclick = () => openPicker(false);
+  document.getElementById('searchBtn').onclick = () => openPicker(true);
+  document.getElementById('pClose').onclick = closePicker;
+  picker.addEventListener('click', e => { if (e.target === picker) closePicker(); });
+  tabQ.addEventListener('input', renderPicker);
+  tabQ.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const b = plist.querySelector('button'); if (b) b.click(); }
+    if (e.key === 'Escape') closePicker();
+  });
+  plist.addEventListener('click', e => {
+    const b = e.target.closest('button[data-t]');
+    if (!b) return;
+    closePicker();
+    if (b.dataset.t !== currentTab) setTab(b.dataset.t);
+  });
+
+  function useTabs(res) { TABS = res.tabs; BUDGET = res.budget || res.tabs; HID = res.hidden || []; showTabName(); }
+  function loadTabs(force) {
+    google.script.run
+      .withSuccessHandler(res => {
+        useTabs(res);
+        try { localStorage.setItem('hb_tabs', JSON.stringify(res)); } catch (e) {}
+        if (!picker.hidden) renderPicker();
+      })
+      .withFailureHandler(e => toast('Error: ' + e.message))
+      .getTabs(!!force);
+  }
+
+  // Start: pichli list/data foran dikhao, aur saath saath (parallel) sheet se taaza mangwao
+  (function start() {
+    let saved = '', tabsC = null;
+    try { saved = localStorage.getItem('hb_tab') || ''; tabsC = JSON.parse(localStorage.getItem('hb_tabs') || 'null'); } catch (e) {}
+    if (tabsC) useTabs(tabsC);
+    setTab(saved);          // saved na ho to server khud is mahine ka tab chunega
+    loadTabs(false);
+  })();
+</script>
+</body>
+</html>
