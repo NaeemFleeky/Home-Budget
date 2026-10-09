@@ -207,6 +207,30 @@
   .meter i.over { background:var(--madder); }
   .empty { text-align:center; color:var(--muted); padding:30px 10px; }
 
+  /* ---------- Edit form ---------- */
+  #editor { position:fixed; inset:0; z-index:60; background:rgba(10,12,30,.5); display:flex; align-items:flex-end; justify-content:center; }
+  #editor[hidden] { display:none; }
+  .ebox { background:#fff; width:100%; max-width:560px; max-height:88vh; border-radius:20px 20px 0 0; display:flex; flex-direction:column; overflow:hidden; }
+  .ehead { display:flex; align-items:center; gap:8px; padding:14px 16px 10px; border-bottom:1px solid var(--line); }
+  .ehead b { font-size:18px; font-weight:800; color:var(--blue); }
+  .ehead small { color:var(--muted); font-size:13px; flex:1; }
+  .ehead button { border:0; background:#eceef6; border-radius:10px; width:38px; height:38px; font-size:17px; }
+  .ebody { overflow:auto; padding:6px 16px 14px; -webkit-overflow-scrolling:touch; }
+  .ebody .ef { margin-top:8px; }
+  .ebody .ef.lock input { background:#f3f3f3; color:#888; }
+  .ebody .ef small { display:block; font-size:11.5px; color:var(--muted); margin-top:3px; }
+  .ebody .ef.chg input { border-color:var(--madder); background:#fff6f5; }
+  .efoot { display:flex; gap:10px; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); }
+  .efoot button { border:0; border-radius:12px; padding:13px 10px; font-family:inherit; font-size:16px; font-weight:800; }
+  #eDel { flex:0 0 40%; background:#fff; color:var(--madder); border:1.5px solid var(--madder); }
+  #eDel.sure { background:var(--madder); color:#fff; }
+  #eSave { flex:1; background:var(--blue); color:#fff; }
+  #eSave:disabled, #eDel:disabled { opacity:.55; }
+  .ent { cursor:pointer; }
+  .ent:active { background:#f2f3f8; }
+  table.sheet:not(.raw) tbody tr[data-row] { cursor:pointer; }
+  .edithint { font-size:12px; color:var(--muted); margin:-6px 4px 10px; }
+
   /* ================= Claude theme: sirf Data Entry hissa ================= */
   #entryTab, body.entry .bar { --cl-bg:#f5f0e6; --cl-card:#fbf8f2; --cl-text:#2b2925; --cl-muted:#78736a; --cl-accent:#d97757; --cl-accent-d:#c2603f; --cl-line:#e6dfd2; --cl-soft:#f3e3d9; }
   body.entry { background:#f5f0e6; }
@@ -327,6 +351,7 @@
       <button type="button" data-m="cols">Column totals</button>
       <button type="button" data-m="table">Poori sheet</button>
     </div>
+    <div class="edithint" id="editHint">✏️ Kisi bhi entry pe tap karo to edit ya mita sakte ho</div>
     <div id="listWrap"></div>
     <div id="colsWrap" hidden></div>
     <div class="tblwrap" id="tblWrap" hidden><table class="sheet" id="sheet"><tbody><tr><td>Loading…</td></tr></tbody></table></div>
@@ -340,6 +365,16 @@
   <img src="icon-192.png" alt="">
   <h1>Home Budget</h1>
   <p id="setupMsg">Ye app pehli dafa apne <b>setup link</b> se kholo. Woh link WhatsApp pe save hai.</p>
+</div>
+<div id="editor" hidden>
+  <div class="ebox">
+    <div class="ehead"><b>Entry edit karo</b><small id="eSub"></small><button id="eClose" type="button" aria-label="Band karo">✕</button></div>
+    <div class="ebody" id="eBody"></div>
+    <div class="efoot">
+      <button id="eDel" type="button">Entry mitao</button>
+      <button id="eSave" type="button">Changes save karo</button>
+    </div>
+  </div>
 </div>
 <div id="picker" hidden>
   <div class="pbox">
@@ -596,6 +631,7 @@
     const d = viewData;
     if (!d) return;
     const q0 = document.getElementById('q').value.trim().toLowerCase();
+    document.getElementById('editHint').hidden = !!d.raw || vMode === 'cols';
     if (d.raw) { document.getElementById('vmode').hidden = true; showMode(true); return renderRaw(d, q0); }
     document.getElementById('sheet').classList.remove('raw');
     document.getElementById('sumbox2').innerHTML = sumHtml(d.box);
@@ -620,7 +656,7 @@
     const totRow = (cls, label, vals) => `<tr class="${cls}"><td class="c0 lbl"></td><td class="c1 lbl">${label}</td>` +
       cols.map(j => `<td class="${isNum(vals[j]) ? 'n' : ''}">${esc(vals[j])}</td>`).join('') + '</tr>';
     h += totRow('bud', 'Budget', d.budget) + totRow('kh', 'Kharch', d.kharch) + '</thead><tbody>';
-    h += rows.length ? rows.map(r => `<tr><td class="c0">${esc(shortD(r.v[0]))}</td><td class="c1 item">${esc(r.v[1] || '—')}</td>` +
+    h += rows.length ? rows.map(r => `<tr data-row="${r.row}"><td class="c0">${esc(shortD(r.v[0]))}</td><td class="c1 item">${esc(r.v[1] || '—')}</td>` +
       cols.map(j => `<td class="${cellClass(j, r.v[j], d)}">${esc(r.v[j])}</td>`).join('') + '</tr>').join('')
       : `<tr><td colspan="${cols.length + 2}">Koi entry nahi mili</td></tr>`;
     h += '</tbody>';
@@ -638,6 +674,7 @@
     document.getElementById('listWrap').hidden = m !== 'list';
     document.getElementById('colsWrap').hidden = m !== 'cols';
     document.getElementById('tblWrap').hidden = m !== 'table';
+    document.getElementById('editHint').hidden = !!rawTab || m === 'cols';
     document.querySelectorAll('#vmode button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   }
   document.getElementById('vmode').addEventListener('click', e => {
@@ -669,7 +706,7 @@
           }
         }
         g.total += total;
-        return `<div class="ent"><div class="top"><div class="nm">${esc(r.v[1] || '(no name)')}</div>` +
+        return `<div class="ent" data-row="${r.row}"><div class="top"><div class="nm">${esc(r.v[1] || '(no name)')}</div>` +
           `<div class="amt">${total ? fmt(total) : ''}</div></div>` +
           (chips.length ? `<div class="chips">${chips.join('')}</div>` : '') + '</div>';
       }).join('');
@@ -694,6 +731,92 @@
 
   document.getElementById('refresh').onclick = () => { load(); loadTabs(true); };
   document.getElementById('q').addEventListener('input', renderView);
+
+  /* ---------- Edit / Delete ---------- */
+  const editor = document.getElementById('editor');
+  let editRow = null;
+  const MONI = { Jan:0, Feb:1, Mar:2, Apr:3, May:4, Jun:5, Jul:6, Aug:7, Sep:8, Oct:9, Nov:10, Dec:11 };
+  function toIso(s) {
+    const m = String(s).match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+    if (!m || MONI[m[2]] === undefined) return '';
+    return m[3] + '-' + String(MONI[m[2]] + 1).padStart(2, '0') + '-' + String(m[1]).padStart(2, '0');
+  }
+  function isTextCol(d, j) { return j === 1 || j === d.descIdx || /descr|discr|remark|note/i.test(d.headers[j]); }
+
+  function openEditor(rowNum) {
+    const d = viewData; if (!d || d.raw) return;
+    const r = d.rows.find(x => x.row === rowNum); if (!r) return;
+    editRow = r;
+    document.getElementById('eSub').textContent = currentTab + ' · row ' + r.row;
+    document.getElementById('eBody').innerHTML = d.headers.map((hd, j) => {
+      const v = r.v[j];
+      if (j === 0) {
+        const iso = toIso(v);
+        return iso || !v
+          ? `<div class="ef"><label>Date</label><input data-j="0" type="date" value="${iso}"></div>`
+          : `<div class="ef"><label>Date</label><input data-j="0" value="${esc(v)}"><small>Format: 7-Oct-2026</small></div>`;
+      }
+      const txt = isTextCol(d, j);
+      return `<div class="ef"><label>${esc(hd)}</label><input data-j="${j}" value="${esc(v)}" ${txt ? '' : 'inputmode="decimal"'}></div>`;
+    }).join('');
+    document.querySelectorAll('#eBody input').forEach(inp => inp.addEventListener('input', () => {
+      inp.closest('.ef').classList.toggle('chg', curVal(inp) !== String(editRow.v[+inp.dataset.j]));
+    }));
+    const del = document.getElementById('eDel'); del.classList.remove('sure'); del.textContent = 'Entry mitao';
+    del.disabled = false; document.getElementById('eSave').disabled = false;
+    editor.hidden = false;
+  }
+  function curVal(inp) {
+    const j = +inp.dataset.j;
+    if (j === 0 && inp.type === 'date') {
+      if (!inp.value) return '';
+      const p = inp.value.split('-');
+      return (+p[2]) + '-' + MON[+p[1] - 1] + '-' + p[0];
+    }
+    return inp.value.trim();
+  }
+  function closeEditor() { editor.hidden = true; editRow = null; }
+  document.getElementById('eClose').onclick = closeEditor;
+  editor.addEventListener('click', e => { if (e.target === editor) closeEditor(); });
+
+  function afterEdit(res, msg) {
+    cachePut(res); applyData(res); closeEditor();
+    toast(msg + (res.skipped && res.skipped.length ? ' (formula wale cells nahi badle)' : ''));
+  }
+  function editFail(e) {
+    document.getElementById('eSave').disabled = false; document.getElementById('eDel').disabled = false;
+    document.getElementById('eSave').textContent = 'Changes save karo';
+    toast('Error: ' + e.message);
+  }
+
+  document.getElementById('eSave').onclick = () => {
+    if (!editRow) return;
+    const values = {}; let n = 0;
+    document.querySelectorAll('#eBody input').forEach(inp => {
+      const j = +inp.dataset.j, v = curVal(inp);
+      if (v !== String(editRow.v[j])) { values[j] = v; n++; }
+    });
+    if (!n) return closeEditor();
+    const b = document.getElementById('eSave'); b.disabled = true; b.textContent = 'Saving…';
+    document.getElementById('eDel').disabled = true;
+    google.script.run.withSuccessHandler(res => { b.textContent = 'Changes save karo'; afterEdit(res, '✓ Entry update ho gayi'); })
+      .withFailureHandler(editFail).updateEntry(currentTab, editRow.row, editRow.v, values);
+  };
+
+  document.getElementById('eDel').onclick = () => {
+    if (!editRow) return;
+    const del = document.getElementById('eDel');
+    if (!del.classList.contains('sure')) { del.classList.add('sure'); del.textContent = 'Pakka? Dobara dabao'; return; }
+    del.disabled = true; del.textContent = 'Mita raha…';
+    document.getElementById('eSave').disabled = true;
+    google.script.run.withSuccessHandler(res => afterEdit(res, '✓ Entry mita di'))
+      .withFailureHandler(e => { del.textContent = 'Entry mitao'; del.classList.remove('sure'); editFail(e); })
+      .deleteEntry(currentTab, editRow.row, editRow.v);
+  };
+
+  ['listWrap', 'tblWrap'].forEach(id => document.getElementById(id).addEventListener('click', e => {
+    const el = e.target.closest('[data-row]'); if (el) openEditor(+el.dataset.row);
+  }));
 
   /* ---------- Tab chunna (search ke saath) ---------- */
   let HID = [];
