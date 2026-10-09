@@ -150,6 +150,7 @@
   .sumbox div.hero.negv { background:var(--madder); }
   .neg { color:var(--red) !important; }
   .sumbox div.hero b.neg { color:#fff !important; }
+  .sumbox div.hero.negv small::after { content:" (minus mein)"; }
 
   .bar { background:rgba(233,235,243,.92); backdrop-filter:blur(6px); box-shadow:none; border-top:1px solid var(--line); }
   .bar button { font-family:inherit; font-size:18px; font-weight:800; border-radius:12px; background:var(--madder); }
@@ -231,6 +232,8 @@
   #entryTab .sumbox div.hero small { color:rgba(255,255,255,.85); }
   #entryTab .sumbox div.hero b { color:#fff; }
   #entryTab .neg { color:#b5462f !important; }
+  #entryTab .sumbox div.hero b, #entryTab .sumbox div.hero b.neg { color:#fff !important; }
+  #entryTab .sumbox div.hero.negv small::after { content:" (minus mein)"; }
   #entryTab .recent .e { border-bottom-color:var(--cl-line); }
   #entryTab .recent .e b { font-family:"Source Serif 4", Georgia, serif; font-weight:600; }
   #entryTab .recent .e span { color:var(--cl-muted); }
